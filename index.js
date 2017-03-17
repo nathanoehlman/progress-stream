@@ -11,8 +11,10 @@ module.exports = function(options, onprogress) {
 	var transferred = options.transferred || 0;
 	var nextUpdate = Date.now()+time;
 	var delta = 0;
-	var speed = speedometer(options.speed || 5000);
+	var speed = speedometer(options.speed || 5);
 	var startTime = Date.now();
+	var ended = false;
+	var _timer;
 
 	var update = {
 		percentage: 0,
@@ -32,6 +34,7 @@ module.exports = function(options, onprogress) {
 		nextUpdate = Date.now()+time;
 
 		delta = 0;
+		if (ended && _timer) clearInterval(_timer)
 
 		tr.emit('progress', update);
 	};
@@ -41,12 +44,12 @@ module.exports = function(options, onprogress) {
 		delta += len;
 		update.transferred = transferred;
 		update.remaining = length >= transferred ? length - transferred : 0;
-
-		if (Date.now() >= nextUpdate) emit(false);
+		ended = false;
+		if (!time && Date.now() >= nextUpdate) emit();
 		callback(null, chunk);
 	};
 	var end = function(callback) {
-		emit(true);
+		if (!time) emit();
 		callback();
 	};
 
@@ -57,13 +60,14 @@ module.exports = function(options, onprogress) {
 		update.remaining = length - update.transferred;
 		tr.emit('length', length);
 	};
-	
+
 	// Expose `onlength()` handler as `setLength()` to support custom use cases where length
 	// is not known until after a few chunks have already been pumped, or is
 	// calculated on the fly.
 	tr.setLength = onlength;
-	
+
 	tr.on('pipe', function(stream) {
+		if (time) setInterval(emit, time)
 		if (typeof length === 'number') return;
 		// Support http module
 		if (stream.readable && !stream.writable && stream.headers) {
