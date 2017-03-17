@@ -67,7 +67,7 @@ module.exports = function(options, onprogress) {
 	tr.setLength = onlength;
 
 	tr.on('pipe', function(stream) {
-		if (time) setInterval(emit, time)
+		if (time) _timer = setInterval(emit, time)
 		if (typeof length === 'number') return;
 		// Support http module
 		if (stream.readable && !stream.writable && stream.headers) {
