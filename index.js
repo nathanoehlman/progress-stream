@@ -25,7 +25,7 @@ module.exports = function(options, onprogress) {
 		runtime: 0
 	};
 
-	var emit = function(ended) {
+	var emit = function() {
 		update.delta = delta;
 		update.percentage = ended ? 100 : (length ? transferred/length*100 : 0);
 		update.speed = speed(delta);
@@ -49,6 +49,7 @@ module.exports = function(options, onprogress) {
 		callback(null, chunk);
 	};
 	var end = function(callback) {
+		ended = true;
 		if (!time) emit();
 		callback();
 	};
@@ -98,5 +99,6 @@ module.exports = function(options, onprogress) {
 
 		return update;
 	};
+
 	return tr;
 };
